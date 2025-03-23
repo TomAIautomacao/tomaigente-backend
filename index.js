@@ -1,45 +1,41 @@
 const express = require('express');
 const axios = require('axios');
-const app = express();
+require('dotenv').config(); // para ler a variável APIKEY do Railway
 
+const app = express();
 app.use(express.json());
 
 app.post('/', async (req, res) => {
-  const { number, text, session } = req.body;
+  const { session, number, text } = req.body;
 
-  console.log(`➡️ Mensagem recebida para envio: ${number} | ${text}`);
+  console.log(`Mensagem recebida => número: ${number} | texto: ${text}`);
 
   try {
-    const response = await axios.post(
-      'https://evolucionai-evolutionapi.avbrhj.easypanel.host/message/sendText',
-      {
-        session, // Ex: "teste"
-        number,  // Ex: "5527998369293@s.whatsapp.net"
-        text     // Ex: "Olá! Aqui está sua resposta..."
-      },
-      {
-        headers: {
-          'apikey': process.env.APIKEY, // ⚠️ configure no Railway em "Variables"
-          'Content-Type': 'application/json'
-        }
+    const response = await axios.post('https://evolucionai-evolutionapi.avbrhj.easypanel.host/message/send-text', {
+      session,
+      number,
+      text,
+    }, {
+      headers: {
+        'apikey': process.env.APIKEY,
+        'Content-Type': 'application/json'
       }
-    );
+    });
 
-    console.log('✅ Mensagem enviada com sucesso:', response.data);
+    console.log('Resposta da API:', response.data);
 
     return res.status(200).json({
-      status: 'mensagem enviada',
-      para: number,
-      texto: text,
-      response: response.data
+      status: 'sucesso',
+      enviado_para: number,
+      resposta_da_api: response.data,
     });
 
   } catch (error) {
-    console.error('❌ Erro ao enviar mensagem:', error.message);
-
+    console.error('Erro ao enviar mensagem:', error.response?.data || error.message);
     return res.status(500).json({
-      status: 'erro ao enviar',
-      error: error.message
+      status: 'erro',
+      mensagem: 'Falha ao enviar mensagem via EvolutionAPI',
+      erro: error.response?.data || error.message
     });
   }
 });
